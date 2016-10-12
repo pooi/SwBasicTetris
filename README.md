@@ -1,6 +1,24 @@
 # SwBasicTetris
 
-This is Simple tetris.
+This is simple tetris.
+
+<br><br>
+
+## Usage
+Please check your options.
+```c++
+void init(){
+
+    SPEED = 1000; // Tetris game speed (ms)
+    GHOST_MODE = true // Shows a drop position
+    DETECT_CHECK = true; // Check colision
+    ROTATE_CORNER = true; // Rotate block by corner
+    SHOW_NEXT_BLOCK = true; // Show next block
+    ENABLE_CLEAR_BLOCK = false; // Create CLEAR_BLOCK (Remove two line from bottom)
+    
+}
+```
+
 
 <br><br>
 ## License
