@@ -52,6 +52,7 @@ bool GHOST_MODE = true;
 bool DETECT_CHECK = true;
 bool ROTATE_CORNER = false;
 bool SHOW_NEXT_BLOCK = true;
+bool ENABLE_CLEAR_BLOCK = true;
 
 
 void SetCurrentCursorPos(int x, int y)
@@ -106,10 +107,14 @@ void ShowBlock(char blockInfo[4][4])
 	{
 		for (x = 0; x<4; x++)
 		{
+
 			SetCurrentCursorPos(curPos.X + (x * 2), curPos.Y + y);
 
 			if (blockInfo[y][x] == 1)
 				printf("■");
+			else if (blockInfo[y][x] == 2)
+				printf("★");
+
 		}
 	}
 	SetCurrentCursorPos(curPos.X, curPos.Y);
@@ -128,7 +133,7 @@ void DeleteBlock(char blockInfo[4][4])
 		{
 			SetCurrentCursorPos(curPos.X + x * 2, curPos.Y + y);
 
-			if (blockInfo[y][x] == 1)
+			if (blockInfo[y][x])
 				printf(" ");
 		}
 	}
@@ -248,9 +253,15 @@ void RotateBlock()
 
 			if (!DetectColision(x + 2, y, blockModel[block_id])) {
 				ShiftLeft();
+				if (block_id >= 12 && block_id < 16) {
+					ShiftLeft();
+				}
 			}
 			if (!DetectColision(x - 2, y, blockModel[block_id])) {
 				ShiftRight();
+				/*if (block_id >= 12 && block_id < 16) {
+					ShiftRight();
+				}*/
 			}
 
 			DeleteBlock(blockModel[block_id]);
@@ -329,7 +340,18 @@ bool DetectColision(int posX, int posY, char blockModel[4][4]) {
 		for (x = 0; x<4; x++) {
 			for (y = 0; y<4; y++) {
 
-				if (blockModel[y][x] && gameBoardInfo[arrY + y][arrX + x] == 1) {
+				int convertX = arrX + x;
+				int convertY = arrY + y;
+
+				if (blockModel[y][x] == 1 && gameBoardInfo[convertY][convertX]) {
+					return false;
+				}
+				else if (blockModel[y][x] == 2 && gameBoardInfo[convertY][convertX] == 1) {
+
+					gameBoardInfo[convertY][convertX] = 0;
+
+				}
+				else if (blockModel[y][x] == 2 && gameBoardInfo[convertY][convertX] == 9) {
 					return false;
 				}
 
@@ -397,13 +419,13 @@ void DrawGameBoard() {
 
 	// 마지막 전줄 까지만 채움
 	for (int y = 0; y<GBOARD_HEIGHT; y++) {
-		gameBoardInfo[y][0] = 1;
-		gameBoardInfo[y][GBOARD_WIDTH + 1] = 1;
+		gameBoardInfo[y][0] = 9;
+		gameBoardInfo[y][GBOARD_WIDTH + 1] = 9;
 	}
 
 	// 마지막줄을 1로 채움
 	for (int x = 0; x<GBOARD_WIDTH + 2; x++) {
-		gameBoardInfo[GBOARD_HEIGHT][x] = 1;
+		gameBoardInfo[GBOARD_HEIGHT][x] = 9;
 	}
 
 	// 맵 라인 출력부
@@ -461,15 +483,33 @@ void ReDrawBlocks(void)
 	}
 }
 
+bool isContain(int* arr, int size, int find) {
+
+	for (int i = 0; i < size; i++) {
+		if (arr[i] == find) {
+			return true;
+		}
+	}
+
+	return false;
+
+}
+
 void RemoveFillUpLine() {
 
 	int line, x, y;
 	for (y = GBOARD_HEIGHT - 1; y>0; y--) {
 		//완성된 라인이 있는지 검사
 		for (x = 1; x<GBOARD_WIDTH + 1; x++) {
-			if (gameBoardInfo[y][x] != 1) {
+
+			if (isContain(gameBoardInfo[y], GBOARD_WIDTH + 2, 2)) {
+				x = GBOARD_WIDTH + 1;
 				break;
 			}
+			if (isContain(gameBoardInfo[y], GBOARD_WIDTH + 2, 0)) {
+				break;
+			}
+
 		}
 
 		if (x == (GBOARD_WIDTH + 1)) {
@@ -499,8 +539,8 @@ void AddBlockToBoard() {
 			arrCurX = (curPosX - GBOARD_ORIGIN_X) / 2;
 			arrCurY = curPosY - GBOARD_ORIGIN_Y;
 
-			if (blockModel[block_id][y][x] == 1) {
-				gameBoardInfo[arrCurY + y][arrCurX + x] = 1;
+			if (blockModel[block_id][y][x]) {
+				gameBoardInfo[arrCurY + y][arrCurX + x] = blockModel[block_id][y][x];
 			}
 
 		}
@@ -513,10 +553,12 @@ void init() {
 	// 기본설정
 	RemoveCursor();
 	DrawGameBoard();
+	SPEED = 1000;
 	GHOST_MODE = true; // 고스트를 보이고 싶다면 true아니면 false
 	DETECT_CHECK = true; // 충돌을 체크할 것인가 체크하고 싶으면 true
 	ROTATE_CORNER = true; // 코너에서 돌릴 수 없는 경우 이동시킨 후 회전시킬 것인가
-	SHOW_NEXT_BLOCK = false; // 다음 블럭을 보여줄 것인가
+	SHOW_NEXT_BLOCK = true; // 다음 블럭을 보여줄 것인가
+	ENABLE_CLEAR_BLOCK = true;
 
 }
 
@@ -525,14 +567,18 @@ void GameStart() {
 	init();
 
 	srand((unsigned int)time(NULL));
-	int next_block_id = (rand() % 7) * 4;
+	int next_block_id = (rand() % 8) * 4;
 	// 게임 반복
 	while (1) {
 
 		SetCurrentCursorPos(GBOARD_ORIGIN_X + GBOARD_WIDTH, GBOARD_ORIGIN_Y - 2);
 		srand((unsigned int)time(NULL));
 		block_id = next_block_id;
-		next_block_id = (rand() % 7) * 4;
+		next_block_id = (rand() % 8) * 4;
+
+		if (next_block_id >= 28 || block_id >= 28) {
+			int a = 10;
+		}
 
 		// 다음 블럭을 보여줌
 		if (SHOW_NEXT_BLOCK) {
@@ -566,6 +612,10 @@ void GameStart() {
 
 }
 
+/*=========================================================================*/
+/*================================= Main ==================================*/
+/*=========================================================================*/
+
 int main() {
 
 	GameStart();
@@ -578,6 +628,11 @@ int main() {
 	getchar();
 
 }
+
+
+/*=========================================================================*/
+/*=========================== Addition Function ===========================*/
+/*=========================================================================*/
 
 void ShowNextBlock(char blockInfo[4][4])
 {
@@ -597,6 +652,9 @@ void ShowNextBlock(char blockInfo[4][4])
 
 			if (blockInfo[y][x] == 1)
 				printf("■");
+			else if (blockInfo[y][x] == 2)
+				printf("★");
+
 		}
 	}
 	//SetCurrentCursorPos(curPos.X, curPos.Y);
@@ -620,7 +678,7 @@ void DeleteNextBlock(char blockInfo[4][4])
 		{
 			SetCurrentCursorPos(curPos.X + x * 2, curPos.Y + y);
 
-			if (blockInfo[y][x] == 1)
+			if (blockInfo[y][x])
 				printf(" ");
 		}
 	}
@@ -639,6 +697,9 @@ void ShowBlockGhost(char blockInfo[4][4])
 
 			if (blockInfo[y][x] == 1)
 				printf("□");
+			else if (blockInfo[y][x] == 2)
+				printf("☆");
+
 		}
 	}
 	SetCurrentCursorPos(curPos.X, curPos.Y);
@@ -664,7 +725,7 @@ void DeleteBlockGhost(char blockInfo[4][4])
 
 void ShowGhost() {
 
-	if (GHOST_MODE && DETECT_CHECK) {
+	if (GHOST_MODE && DETECT_CHECK && (!ENABLE_CLEAR_BLOCK)) {
 
 		COORD current = GetCurrentCursorPos();
 		int x = current.X;
@@ -687,7 +748,7 @@ void ShowGhost() {
 
 void DeleteGhost() {
 
-	if (GHOST_MODE && DETECT_CHECK) {
+	if (GHOST_MODE && DETECT_CHECK && (!ENABLE_CLEAR_BLOCK)) {
 
 		COORD current = GetCurrentCursorPos();
 		int x = current.X;
@@ -714,12 +775,9 @@ void PrintMapByte() {
 	for (int y = 0; y < GBOARD_HEIGHT + 1; y++) {
 		SetCurrentCursorPos(GBOARD_ORIGIN_X + GBOARD_WIDTH + 50, GBOARD_ORIGIN_Y + y);
 		for (int x = 0; x < GBOARD_WIDTH + 2; x++) {
-			if (gameBoardInfo[y][x] == 1) {
-				printf("11");
-			}
-			else {
-				printf("00");
-			}
+
+			printf("%d%d", gameBoardInfo[y][x], gameBoardInfo[y][x]);
+
 		}
 		printf("\n");
 	}
