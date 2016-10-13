@@ -1,6 +1,6 @@
-# SwBasicTetris
+<h1 align=center>SwBasicTetris</h1>
+<p align=center>This is simple tetris.</p>
 
-This is simple tetris.
 
 <br><br>
 
