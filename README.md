@@ -15,6 +15,7 @@ void init(){
     ROTATE_CORNER = true; // Rotate block by corner
     SHOW_NEXT_BLOCK = true; // Show next block
     ENABLE_CLEAR_BLOCK = false; // Create CLEAR_BLOCK (Remove two line from bottom)
+    ENABLE_BOMB_BLOCK = false; // Create BOMB_BLOCK (Remove blocks of the surrounding)
     
 }
 ```
