@@ -1,3 +1,9 @@
+
+const int CLEAR_BLOCK_BYTE = 2;
+const int CLEAR_BLOCK_INDEX = 7;
+const int BOMB_BLOCK_BYTE = 3;
+const int BOMB_BLOCK_INDEX = 8;
+
 char blockModel[][4][4] =
 {
 	// index 0 - ¤¤
@@ -190,27 +196,53 @@ char blockModel[][4][4] =
 
 	// index 7 - clear block
 	{
-		{ 2, 2, 0, 0 },
-		{ 2, 2, 0, 0 },
+		{ CLEAR_BLOCK_BYTE, CLEAR_BLOCK_BYTE, 0, 0 },
+		{ CLEAR_BLOCK_BYTE, CLEAR_BLOCK_BYTE, 0, 0 },
 		{ 0, 0, 0, 0 },
 		{ 0, 0, 0, 0 }
 	},
 	{
-		{ 2, 2, 0, 0 },
-		{ 2, 2, 0, 0 },
+		{ CLEAR_BLOCK_BYTE, CLEAR_BLOCK_BYTE, 0, 0 },
+		{ CLEAR_BLOCK_BYTE, CLEAR_BLOCK_BYTE, 0, 0 },
 		{ 0, 0, 0, 0 },
 		{ 0, 0, 0, 0 }
 	},
 	{
-		{ 2, 2, 0, 0 },
-		{ 2, 2, 0, 0 },
+		{ CLEAR_BLOCK_BYTE, CLEAR_BLOCK_BYTE, 0, 0 },
+		{ CLEAR_BLOCK_BYTE, CLEAR_BLOCK_BYTE, 0, 0 },
 		{ 0, 0, 0, 0 },
 		{ 0, 0, 0, 0 }
 	},
 	{
-		{ 2, 2, 0, 0 },
-		{ 2, 2, 0, 0 },
+		{ CLEAR_BLOCK_BYTE, CLEAR_BLOCK_BYTE, 0, 0 },
+		{ CLEAR_BLOCK_BYTE, CLEAR_BLOCK_BYTE, 0, 0 },
 		{ 0, 0, 0, 0 },
 		{ 0, 0, 0, 0 }
 	},
+
+	// index 8 - bomb block
+	{
+		{ BOMB_BLOCK_BYTE, BOMB_BLOCK_BYTE, 0, 0 },
+		{ BOMB_BLOCK_BYTE, BOMB_BLOCK_BYTE, 0, 0 },
+		{ 0, 0, 0, 0 },
+		{ 0, 0, 0, 0 }
+	},
+	{
+		{ BOMB_BLOCK_BYTE, BOMB_BLOCK_BYTE, 0, 0 },
+		{ BOMB_BLOCK_BYTE, BOMB_BLOCK_BYTE, 0, 0 },
+		{ 0, 0, 0, 0 },
+		{ 0, 0, 0, 0 }
+	},
+	{
+		{ BOMB_BLOCK_BYTE, BOMB_BLOCK_BYTE, 0, 0 },
+		{ BOMB_BLOCK_BYTE, BOMB_BLOCK_BYTE, 0, 0 },
+		{ 0, 0, 0, 0 },
+		{ 0, 0, 0, 0 }
+	},
+	{
+		{ BOMB_BLOCK_BYTE, BOMB_BLOCK_BYTE, 0, 0 },
+		{ BOMB_BLOCK_BYTE, BOMB_BLOCK_BYTE, 0, 0 },
+		{ 0, 0, 0, 0 },
+		{ 0, 0, 0, 0 }
+	}
 };

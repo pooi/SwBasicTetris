@@ -38,6 +38,7 @@ int gameBoardInfo[GBOARD_HEIGHT + 1][GBOARD_WIDTH + 2];
 
 bool DetectColision(int posX, int posY, char blockModel[4][4]);
 
+
 void ScreenSaver();
 void BlockControlFromKeyboard();
 void PrintMapByte();
@@ -48,11 +49,12 @@ void DeleteGhost();
 void ShowNextBlock(char blockInfo[4][4]);
 void DeleteNextBlock(char blockInfo[4][4]);
 
-bool GHOST_MODE = true;
-bool DETECT_CHECK = true;
+bool GHOST_MODE = false;
+bool DETECT_CHECK = false;
 bool ROTATE_CORNER = false;
-bool SHOW_NEXT_BLOCK = true;
-bool ENABLE_CLEAR_BLOCK = true;
+bool SHOW_NEXT_BLOCK = false;
+bool ENABLE_CLEAR_BLOCK = false;
+bool ENABLE_BOMB_BLOCK = false;
 
 
 void SetCurrentCursorPos(int x, int y)
@@ -112,8 +114,10 @@ void ShowBlock(char blockInfo[4][4])
 
 			if (blockInfo[y][x] == 1)
 				printf("■");
-			else if (blockInfo[y][x] == 2)
+			else if (blockInfo[y][x] == CLEAR_BLOCK_BYTE)
 				printf("★");
+			else if (blockInfo[y][x] == BOMB_BLOCK_BYTE)
+				printf("●");
 
 		}
 	}
@@ -346,12 +350,17 @@ bool DetectColision(int posX, int posY, char blockModel[4][4]) {
 				if (blockModel[y][x] == 1 && gameBoardInfo[convertY][convertX]) {
 					return false;
 				}
-				else if (blockModel[y][x] == 2 && gameBoardInfo[convertY][convertX] == 1) {
+				else if (blockModel[y][x] == CLEAR_BLOCK_BYTE) { // 클리어 블럭
 
-					gameBoardInfo[convertY][convertX] = 0;
+					if(gameBoardInfo[convertY][convertX] == 1){
+						gameBoardInfo[convertY][convertX] = 0;
+					}
+					else if (gameBoardInfo[convertY][convertX] == 9) {
+						return false;
+					}
 
 				}
-				else if (blockModel[y][x] == 2 && gameBoardInfo[convertY][convertX] == 9) {
+				else if (blockModel[y][x] == BOMB_BLOCK_BYTE && gameBoardInfo[convertY][convertX]) { // 폭탄 블럭
 					return false;
 				}
 
@@ -502,7 +511,7 @@ void RemoveFillUpLine() {
 		//완성된 라인이 있는지 검사
 		for (x = 1; x<GBOARD_WIDTH + 1; x++) {
 
-			if (isContain(gameBoardInfo[y], GBOARD_WIDTH + 2, 2)) {
+			if (isContain(gameBoardInfo[y], GBOARD_WIDTH + 2, CLEAR_BLOCK_BYTE)) {
 				x = GBOARD_WIDTH + 1;
 				break;
 			}
@@ -532,12 +541,28 @@ void AddBlockToBoard() {
 	int curPosX, curPosY;
 	GetCurrentCursorPos(curPosX, curPosY);
 
-	for (y = 0; y<4; y++) {
-		for (x = 0; x<4; x++) {
+	// Convert X,Y coodinate to array index
+	arrCurX = (curPosX - GBOARD_ORIGIN_X) / 2;
+	arrCurY = curPosY - GBOARD_ORIGIN_Y;
 
-			// Convert X,Y coodinate to array index
-			arrCurX = (curPosX - GBOARD_ORIGIN_X) / 2;
-			arrCurY = curPosY - GBOARD_ORIGIN_Y;
+	if (block_id / 4 == 8) { // 폭탄 블럭일 경우 별도로 처리
+
+		for (int j = arrCurY - 1; j < arrCurY - 1 + 4; j++) {
+			for (int i = arrCurX - 1; i < arrCurX - 1 + 4; i++) {
+
+				if (gameBoardInfo[j][i] != 9) {
+					gameBoardInfo[j][i] = 0;
+				}
+
+			}
+		}
+
+		return;
+
+	}
+
+	for (y = 0; y < 4; y++) {
+		for (x = 0; x < 4; x++) {
 
 			if (blockModel[block_id][y][x]) {
 				gameBoardInfo[arrCurY + y][arrCurX + x] = blockModel[block_id][y][x];
@@ -546,6 +571,33 @@ void AddBlockToBoard() {
 		}
 	}
 
+}
+
+int getBlock() {
+
+	int	BLOCK_SIZE = 9;
+
+	srand((unsigned int)time(NULL));
+
+	int block;
+	while (1) {
+		block = (rand() % BLOCK_SIZE) * 4;
+		if (block / 4 == CLEAR_BLOCK_INDEX) { // CLEAR_BLOCK이 TRUE일 경우만 적용
+			if (ENABLE_CLEAR_BLOCK) {
+				break;
+			}
+		}
+		else if (block / 4 == BOMB_BLOCK_INDEX) { // BOMB_BLOCK이 TRUE일 경우만 적용
+			if (ENABLE_BOMB_BLOCK) {
+				break;
+			}
+		}
+		else {
+			break;
+		}
+	}
+
+	return block;
 }
 
 void init() {
@@ -558,7 +610,8 @@ void init() {
 	DETECT_CHECK = true; // 충돌을 체크할 것인가 체크하고 싶으면 true
 	ROTATE_CORNER = true; // 코너에서 돌릴 수 없는 경우 이동시킨 후 회전시킬 것인가
 	SHOW_NEXT_BLOCK = true; // 다음 블럭을 보여줄 것인가
-	ENABLE_CLEAR_BLOCK = true;
+	ENABLE_CLEAR_BLOCK = true; // 클리어 블럭을 사용할 것인가
+	ENABLE_BOMB_BLOCK = true; // 폭탄 블럭을 사용할 것인가
 
 }
 
@@ -566,19 +619,15 @@ void GameStart() {
 
 	init();
 
-	srand((unsigned int)time(NULL));
-	int next_block_id = (rand() % 8) * 4;
+	int next_block_id = getBlock();
+	
 	// 게임 반복
 	while (1) {
 
 		SetCurrentCursorPos(GBOARD_ORIGIN_X + GBOARD_WIDTH, GBOARD_ORIGIN_Y - 2);
 		srand((unsigned int)time(NULL));
 		block_id = next_block_id;
-		next_block_id = (rand() % 8) * 4;
-
-		if (next_block_id >= 28 || block_id >= 28) {
-			int a = 10;
-		}
+		next_block_id = getBlock();
 
 		// 다음 블럭을 보여줌
 		if (SHOW_NEXT_BLOCK) {
@@ -621,7 +670,6 @@ int main() {
 	GameStart();
 
 	//RemoveCursor();
-	//DETECT_CHECK = false;
 	////ScreenSaver();
 	//BlockControlFromKeyboard();
 
@@ -652,8 +700,10 @@ void ShowNextBlock(char blockInfo[4][4])
 
 			if (blockInfo[y][x] == 1)
 				printf("■");
-			else if (blockInfo[y][x] == 2)
+			else if (blockInfo[y][x] == CLEAR_BLOCK_BYTE)
 				printf("★");
+			else if (blockInfo[y][x] == BOMB_BLOCK_BYTE)
+				printf("●");
 
 		}
 	}
@@ -697,8 +747,6 @@ void ShowBlockGhost(char blockInfo[4][4])
 
 			if (blockInfo[y][x] == 1)
 				printf("□");
-			else if (blockInfo[y][x] == 2)
-				printf("☆");
 
 		}
 	}
@@ -725,7 +773,7 @@ void DeleteBlockGhost(char blockInfo[4][4])
 
 void ShowGhost() {
 
-	if (GHOST_MODE && DETECT_CHECK && (!ENABLE_CLEAR_BLOCK)) {
+	if (GHOST_MODE && DETECT_CHECK && (block_id/4 != CLEAR_BLOCK_INDEX) && (block_id/4 != BOMB_BLOCK_INDEX)) {
 
 		COORD current = GetCurrentCursorPos();
 		int x = current.X;
@@ -748,7 +796,7 @@ void ShowGhost() {
 
 void DeleteGhost() {
 
-	if (GHOST_MODE && DETECT_CHECK && (!ENABLE_CLEAR_BLOCK)) {
+	if (GHOST_MODE && DETECT_CHECK && (block_id / 4 != CLEAR_BLOCK_INDEX) && (block_id / 4 != BOMB_BLOCK_INDEX)) {
 
 		COORD current = GetCurrentCursorPos();
 		int x = current.X;
