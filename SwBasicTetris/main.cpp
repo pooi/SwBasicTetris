@@ -33,12 +33,12 @@
 #define MAXIMUM_Y 27;
 
 int block_id = 0;
-int SPEED = 1000;
+int SPEED = 50;
 int gameBoardInfo[GBOARD_HEIGHT + 1][GBOARD_WIDTH + 2];
 
 bool DetectColision(int posX, int posY, char blockModel[4][4]);
 
-
+void setSPEED(int s);
 void ScreenSaver();
 void BlockControlFromKeyboard();
 void PrintMapByte();
@@ -48,6 +48,7 @@ void ShowGhost();
 void DeleteGhost();
 void ShowNextBlock(char blockInfo[4][4]);
 void DeleteNextBlock(char blockInfo[4][4]);
+bool isContain(int* arr, int size, int find);
 
 bool GHOST_MODE = false;
 bool DETECT_CHECK = false;
@@ -56,6 +57,13 @@ bool SHOW_NEXT_BLOCK = false;
 bool ENABLE_CLEAR_BLOCK = false;
 bool ENABLE_BOMB_BLOCK = false;
 
+
+
+void setSPEED(int s) {
+
+	SPEED = s / 10;
+
+}
 
 void SetCurrentCursorPos(int x, int y)
 {
@@ -372,12 +380,21 @@ bool DetectColision(int posX, int posY, char blockModel[4][4]) {
 	return true;
 }
 
-bool ProcessKeyInput()
+void ProcessKeyInput()
 {
+
 	int key;
 
 	for (int i = 0; i <SPEED; i++)
 	{
+
+		/*COORD current = GetCurrentCursorPos();
+
+		SetCurrentCursorPos(0, 0);
+
+		printf("%d", i);
+
+		SetCurrentCursorPos(current);*/
 
 		if (_kbhit() != 0)
 		{
@@ -394,11 +411,11 @@ bool ProcessKeyInput()
 				RotateBlock();
 				break;
 			case DOWN:
-				return false;
+				return;
 				break;
 			case SPACE:
 				SpaceDown();
-				return true;
+				return;
 				break;
 			default:
 				break;
@@ -406,10 +423,10 @@ bool ProcessKeyInput()
 
 		}
 
-		Sleep(1);
+		Sleep(10);
 	}
 
-	return false;
+	return;
 }
 
 bool isGameOver() {
@@ -490,18 +507,6 @@ void ReDrawBlocks(void)
 			}
 		}
 	}
-}
-
-bool isContain(int* arr, int size, int find) {
-
-	for (int i = 0; i < size; i++) {
-		if (arr[i] == find) {
-			return true;
-		}
-	}
-
-	return false;
-
 }
 
 void RemoveFillUpLine() {
@@ -605,7 +610,7 @@ void init() {
 	// 기본설정
 	RemoveCursor();
 	DrawGameBoard();
-	SPEED = 1000;
+	setSPEED(1000);
 	GHOST_MODE = true; // 고스트를 보이고 싶다면 true아니면 false
 	DETECT_CHECK = true; // 충돌을 체크할 것인가 체크하고 싶으면 true
 	ROTATE_CORNER = true; // 코너에서 돌릴 수 없는 경우 이동시킨 후 회전시킬 것인가
@@ -624,7 +629,7 @@ void GameStart() {
 	// 게임 반복
 	while (1) {
 
-		SetCurrentCursorPos(GBOARD_ORIGIN_X + GBOARD_WIDTH, GBOARD_ORIGIN_Y - 2);
+		SetCurrentCursorPos(GBOARD_ORIGIN_X + GBOARD_WIDTH, GBOARD_ORIGIN_Y);
 		srand((unsigned int)time(NULL));
 		block_id = next_block_id;
 		next_block_id = getBlock();
@@ -650,7 +655,9 @@ void GameStart() {
 				PrintMapByte(); // 오른쪽에 바이트 표시
 				break;
 			}
+
 			ProcessKeyInput();
+			
 
 		}
 
@@ -681,6 +688,18 @@ int main() {
 /*=========================================================================*/
 /*=========================== Addition Function ===========================*/
 /*=========================================================================*/
+
+bool isContain(int* arr, int size, int find) {
+
+	for (int i = 0; i < size; i++) {
+		if (arr[i] == find) {
+			return true;
+		}
+	}
+
+	return false;
+
+}
 
 void ShowNextBlock(char blockInfo[4][4])
 {
