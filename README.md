@@ -20,6 +20,13 @@ void init(){
 }
 ```
 
+How to start a game.
+```c++
+int main(){
+    GameStart(); // Game start with this function.
+}
+```
+
 
 <br><br>
 ## License
