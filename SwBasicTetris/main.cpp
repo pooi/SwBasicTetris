@@ -4,6 +4,7 @@
 #include<Windows.h>
 #include<time.h>
 #include<conio.h>
+#include<process.h>
 #include"block.h"
 
 #define LEFT 75
@@ -49,6 +50,7 @@ void DeleteGhost();
 void ShowNextBlock(char blockInfo[4][4]);
 void DeleteNextBlock(char blockInfo[4][4]);
 bool isContain(int* arr, int size, int find);
+void FlickerBlock(void *p);
 
 bool GHOST_MODE = false;
 bool DETECT_CHECK = false;
@@ -56,7 +58,7 @@ bool ROTATE_CORNER = false;
 bool SHOW_NEXT_BLOCK = false;
 bool ENABLE_CLEAR_BLOCK = false;
 bool ENABLE_BOMB_BLOCK = false;
-
+//bool FLICKER_BLOCK = true;
 
 
 void setSPEED(int s) {
@@ -108,14 +110,15 @@ void RemoveCursor(void)
 
 void ShowBlock(char blockInfo[4][4])
 {
+
 	int x, y;
 	COORD curPos = GetCurrentCursorPos();
 
 	ShowGhost();
 
-	for (y = 0; y<4; y++)
+	for (y = 0; y < 4; y++)
 	{
-		for (x = 0; x<4; x++)
+		for (x = 0; x < 4; x++)
 		{
 
 			SetCurrentCursorPos(curPos.X + (x * 2), curPos.Y + y);
@@ -130,18 +133,21 @@ void ShowBlock(char blockInfo[4][4])
 		}
 	}
 	SetCurrentCursorPos(curPos.X, curPos.Y);
+
+
 }
 
 void DeleteBlock(char blockInfo[4][4])
 {
+
 	int y, x;
 	COORD curPos = GetCurrentCursorPos();
 
 	DeleteGhost();
 
-	for (y = 0; y<4; y++)
+	for (y = 0; y < 4; y++)
 	{
-		for (x = 0; x<4; x++)
+		for (x = 0; x < 4; x++)
 		{
 			SetCurrentCursorPos(curPos.X + x * 2, curPos.Y + y);
 
@@ -150,6 +156,8 @@ void DeleteBlock(char blockInfo[4][4])
 		}
 	}
 	SetCurrentCursorPos(curPos.X, curPos.Y);
+
+
 }
 
 //void ShiftRight()
@@ -263,22 +271,30 @@ void RotateBlock()
 		// 코너에서 회전할 수 없는 경우 이동시킨 후 회전 할 것인지
 		if (ROTATE_CORNER) {
 
-			if (!DetectColision(x + 2, y, blockModel[block_id])) {
-				ShiftLeft();
-				if (block_id >= 12 && block_id < 16) {
-					ShiftLeft();
-				}
-			}
-			if (!DetectColision(x - 2, y, blockModel[block_id])) {
-				ShiftRight();
-				/*if (block_id >= 12 && block_id < 16) {
-					ShiftRight();
-				}*/
-			}
+			if (DetectColision(x + 2, y, blockModel[nextBlockId])) {
 
-			DeleteBlock(blockModel[block_id]);
-			block_id = nextBlockId;
-			ShowBlock(blockModel[block_id]);
+				DeleteBlock(blockModel[block_id]); // 현재 블럭을 지우고
+				block_id = nextBlockId; // 블럭을 돌리고
+				SetCurrentCursorPos(x + 2, y); // 그릴 수 있는 곳으로 좌표 설정 후
+				ShowBlock(blockModel[block_id]); // 돌린 블럭 그리기
+
+			}
+			else if (DetectColision(x - 2, y, blockModel[nextBlockId])) {
+
+				DeleteBlock(blockModel[block_id]);
+				block_id = nextBlockId;
+				SetCurrentCursorPos(x - 2, y);
+				ShowBlock(blockModel[block_id]);
+
+			}
+			else if (block_id / 4 == 3 && DetectColision(x - 4, y, blockModel[nextBlockId])) {
+
+				DeleteBlock(blockModel[block_id]);
+				block_id = nextBlockId;
+				SetCurrentCursorPos(x - 4, y);
+				ShowBlock(blockModel[block_id]);
+
+			}
 
 		}
 
@@ -514,7 +530,7 @@ void RemoveFillUpLine() {
 	int line, x, y;
 	for (y = GBOARD_HEIGHT - 1; y>0; y--) {
 		//완성된 라인이 있는지 검사
-		for (x = 1; x<GBOARD_WIDTH + 1; x++) {
+		/*for (x = 1; x<GBOARD_WIDTH + 1; x++) {
 
 			if (isContain(gameBoardInfo[y], GBOARD_WIDTH + 2, CLEAR_BLOCK_BYTE)) {
 				x = GBOARD_WIDTH + 1;
@@ -524,9 +540,9 @@ void RemoveFillUpLine() {
 				break;
 			}
 
-		}
+		}*/
 
-		if (x == (GBOARD_WIDTH + 1)) {
+		if ((!isContain(gameBoardInfo[y], GBOARD_WIDTH + 2, 0)) || isContain(gameBoardInfo[y], GBOARD_WIDTH + 2, CLEAR_BLOCK_BYTE)/*x == (GBOARD_WIDTH + 1)*/) {
 			for (line = 0; y - line>0; line++) {
 				// 완성된 라인 채우기
 				memcpy(&gameBoardInfo[y - line][1], &gameBoardInfo[(y - line) - 1][1], GBOARD_WIDTH * sizeof(int));
@@ -617,6 +633,7 @@ void init() {
 	SHOW_NEXT_BLOCK = true; // 다음 블럭을 보여줄 것인가
 	ENABLE_CLEAR_BLOCK = true; // 클리어 블럭을 사용할 것인가
 	ENABLE_BOMB_BLOCK = true; // 폭탄 블럭을 사용할 것인가
+	//FLICKER_BLOCK = true;
 
 }
 
@@ -625,6 +642,10 @@ void GameStart() {
 	init();
 
 	int next_block_id = getBlock();
+
+	/*if (FLICKER_BLOCK) {
+		_beginthread(FlickerBlock, 0, NULL);
+	}*/
 	
 	// 게임 반복
 	while (1) {
@@ -688,6 +709,22 @@ int main() {
 /*=========================================================================*/
 /*=========================== Addition Function ===========================*/
 /*=========================================================================*/
+
+//void FlickerBlock(void *p) {
+//	while (1) {
+//
+//		if (isGameOver()) {
+//			break;
+//		}
+//
+//		ENABLE_SHOW_BLOCK = !ENABLE_SHOW_BLOCK;
+//		FLICKER_BLOCK = false;
+//		ShowBlock(blockModel[block_id]);
+//		FLICKER_BLOCK = true;
+//
+//		Sleep(2000);
+//	}
+//}
 
 bool isContain(int* arr, int size, int find) {
 
