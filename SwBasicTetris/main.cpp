@@ -287,7 +287,7 @@ void RotateBlock()
 				ShowBlock(blockModel[block_id]);
 
 			}
-			else if (block_id / 4 == 3 && DetectColision(x - 4, y, blockModel[nextBlockId])) {
+			else if (block_id / 4 == 3 && DetectColision(x - 4, y, blockModel[nextBlockId])) { // 일자 블럭은 별도로 처리
 
 				DeleteBlock(blockModel[block_id]);
 				block_id = nextBlockId;
